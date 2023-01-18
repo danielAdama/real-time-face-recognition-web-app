@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css" />
+    <title>Video Stream</title>
+  </head>
+  <body>
+    <!-- <img src="{{ url_for('video_feed') }}"> -->
+    <video id = "video" width="690" height="500" autoplay playsinline>
+        Sorry, video element not supported in your browser
+    </video>
+    <div id="error"></div>
+    <button onclick="accessCamera()">Open Camera</button>
+    <button onclick="closeCamera()">Close Camera</button>
+    <script>
+        // Means open the user's webcam without permission and ignore the
+        // audio
+        const mediaStreamConstraints = {
+            audio: false,
+            video: true
+        }
+        let captureFrame = null;
+        async function accessCamera(){
+            const videoElem = document.getElementById("video");
+            const errorElem = document.getElementById('error');
+            let stream = null;
+            try
+            {
+                stream = await window.navigator.mediaDevices.getUserMedia(mediaStreamConstraints);
+                /* The received mediaStream contains both the video and audio media data*/
+                // Adding the received stream to the source of the video element
+                videoElem.srcObject = stream;
+                videoElem.autoplay = true;
+                captureFrame = stream;
+            }
+            catch(err)
+            {
+                errorElem.innerHTML = err;
+                errorElem.style.display = "block";
+                console.log(err);
+            }
+            
+        }
+
+        async function closeCamera(){
+            const videoElem = document.getElementById("video");
+            const errorElem = document.getElementById('error');
+            console.log(captureFrame);
+            /* MediaStream.getTracks() returns an array of all the 
+            MediaStreamTracks being used in the received mediaStream
+            we can iterate through all the mediaTracks and 
+            stop all the mediaTracks by calling its stop() method*/
+            captureFrame.getTracks().forEach(mediaTrack => {
+                mediaTrack.stop();
+            });
+            errorElem.innerHTML = "Camera closed successfully";
+            errorElem.style.display = "block";
+        }
+    </script>
+  </body>
+</html>
