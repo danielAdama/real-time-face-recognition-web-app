@@ -8,17 +8,14 @@
   </head>
   <body>
     <!-- <img src="{{ url_for('video_feed') }}"> -->
-    <video id = "video" width="690" height="500" autoplay playsinline>
+    <video id = "video" width="648" height="485" autoplay playsinline>
         Sorry, video element not supported in your browser
     </video>
     <!-- <canvas id="canvas"></canvas> -->
     <div id="error"></div>
-    <button onclick="accessCamera()">Open Camera</button>
-    <button onclick="closeCamera()">Close Camera</button>
+    <button id="open-btn">Open Camera</button>
+    <button id="close-btn">Close Camera</button>
     <script>
-        // Prevent the client from sending black screen as binaries to the back end(server)
-
-        //let canvas = document.getElementById('canvas');
         // Means open the user's webcam without permission and ignore the
         // audio
         const mediaStreamConstraints = {
@@ -26,8 +23,10 @@
             video: true
         }
         let captureFrame = null;
-        let controller;
-        let videoElem, c_out, cxt_out, tmpCanvas, tmpContext;
+        let controller, videoElem, tmpCanvas, tmpContext;
+
+        document.getElementById("open-btn").addEventListener("click", accessCamera);
+        document.getElementById("close-btn").addEventListener("click", closeCamera);
         async function accessCamera(){
             videoElem = document.getElementById("video");
             const errorElem = document.getElementById('error');
