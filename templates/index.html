@@ -92,8 +92,6 @@
             try
             {
                 tmpContext.drawImage(videoElem, 0, 0, videoElem.videoWidth, videoElem.videoHeight);
-                //let frame = tmpContext.getImageData(0, 0, videoElem.videoWidth, videoElem.videoHeight);
-                //cxt_out.putImageData(0, 0, videoElem.videoWidth, videoElem.videoHeight)
                 const imageUrl = tmpCanvas.toDataURL("image/jpeg");
                 /* Convert the imageUrl from base64 to bolb and then json for faster processing */
                 const data = imageUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
@@ -110,11 +108,7 @@
                     }
                 );
                 var timeId = setTimeout(computeFrame, 0);
-                //console.log(resp.blob)
-                console.log(data);
-                console.log(resp);
-                //console.log(resp.json());
-                //console.log(imageUrl);
+                //console.log(data);
             }
             catch(err)
             {
