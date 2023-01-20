@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" type="text/css" href="/static/style.css" />
     <title>Video Stream</title>
   </head>
   <body>
@@ -11,10 +11,14 @@
     <video id = "video" width="690" height="500" autoplay playsinline>
         Sorry, video element not supported in your browser
     </video>
+    <!-- <canvas id="canvas"></canvas> -->
     <div id="error"></div>
     <button onclick="accessCamera()">Open Camera</button>
     <button onclick="closeCamera()">Close Camera</button>
     <script>
+        // Prevent the client from sending black screen as binaries to the back end(server)
+
+        //let canvas = document.getElementById('canvas');
         // Means open the user's webcam without permission and ignore the
         // audio
         const mediaStreamConstraints = {
@@ -22,9 +26,12 @@
             video: true
         }
         let captureFrame = null;
+        let controller;
+        let videoElem, c_out, cxt_out, tmpCanvas, tmpContext;
         async function accessCamera(){
-            const videoElem = document.getElementById("video");
+            videoElem = document.getElementById("video");
             const errorElem = document.getElementById('error');
+            let tmpCanvas = document.createElement('canvas');
             let stream = null;
             try
             {
@@ -34,6 +41,7 @@
                 videoElem.srcObject = stream;
                 videoElem.autoplay = true;
                 captureFrame = stream;
+                init();
             }
             catch(err)
             {
@@ -43,21 +51,71 @@
             }
             
         }
-
         async function closeCamera(){
-            const videoElem = document.getElementById("video");
+            videoElem = document.getElementById("video");
             const errorElem = document.getElementById('error');
-            console.log(captureFrame);
             /* MediaStream.getTracks() returns an array of all the 
             MediaStreamTracks being used in the received mediaStream
             we can iterate through all the mediaTracks and 
             stop all the mediaTracks by calling its stop() method*/
-            captureFrame.getTracks().forEach(mediaTrack => {
+            try
+            {
+                captureFrame.getTracks().forEach(mediaTrack => {
                 mediaTrack.stop();
-            });
-            errorElem.innerHTML = "Camera closed successfully";
-            errorElem.style.display = "block";
+                });
+                if (controller){
+                    controller.abort();
+                    var timeoutId = await computeFrame();
+                    clearTimeout(timeoutId);
+                    console.log(`Timeout ID ${timeoutId} has been cleared`);
+                    console.log("Frame rendering aborted");
+                }
+            }
+            catch(err)
+            {
+                errorElem.innerHTML = "Camera closed successfully";
+                errorElem.style.display = "block";
+                console.log(err);
+            }
         }
+
+        function init(){
+            videoElem = document.getElementById("video");
+            tmpCanvas = document.createElement('canvas');
+            tmpCanvas.setAttribute("width",videoElem.width);
+            tmpCanvas.setAttribute("height",videoElem.height);
+            tmpContext = tmpCanvas.getContext("2d");
+            videoElem.addEventListener("play", computeFrame);
+        }
+
+        async function computeFrame(){
+            controller = new AbortController();
+            const signal = controller.signal;
+            // Get current video frame as image
+            try
+            {
+                tmpContext.drawImage(videoElem, 0, 0, videoElem.videoWidth, videoElem.videoHeight);
+                //let frame = tmpContext.getImageData(0, 0, videoElem.videoWidth, videoElem.videoHeight);
+                //cxt_out.putImageData(0, 0, videoElem.videoWidth, videoElem.videoHeight)
+                imageUrl = tmpCanvas.toDataURL("image/jpeg");
+                const resp = await fetch(
+                    "http://127.0.0.1:5000/api/v1/verify",
+                    {
+                        method: "POST",
+                        body: imageUrl,
+                        signal: signal
+                    }
+                );
+                var timeId = setTimeout(computeFrame, 0);
+                //console.log(resp.text());
+                console.log(imageUrl);
+            }
+            catch(err)
+            {
+                console.log(err);
+            }
+            return timeId;
+        };
     </script>
   </body>
 </html>
