@@ -7,11 +7,9 @@
     <title>Video Stream</title>
   </head>
   <body>
-    <!-- <img src="{{ url_for('video_feed') }}"> -->
     <video id = "video" width="648" height="485" autoplay playsinline>
         Sorry, video element not supported in your browser
     </video>
-    <!-- <canvas id="canvas"></canvas> -->
     <div id="error"></div>
     <button id="open-btn">Open Camera</button>
     <button id="close-btn">Close Camera</button>
@@ -96,18 +94,27 @@
                 tmpContext.drawImage(videoElem, 0, 0, videoElem.videoWidth, videoElem.videoHeight);
                 //let frame = tmpContext.getImageData(0, 0, videoElem.videoWidth, videoElem.videoHeight);
                 //cxt_out.putImageData(0, 0, videoElem.videoWidth, videoElem.videoHeight)
-                imageUrl = tmpCanvas.toDataURL("image/jpeg");
+                const imageUrl = tmpCanvas.toDataURL("image/jpeg");
+                /* Convert the imageUrl from base64 to bolb and then json for faster processing */
+                const data = imageUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+                //const bolb = new Blob([imageUrl], {type:"image/jpeg"});
                 const resp = await fetch(
                     "http://127.0.0.1:5000/api/v1/verify",
                     {
                         method: "POST",
-                        body: imageUrl,
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(data),
                         signal: signal
                     }
                 );
                 var timeId = setTimeout(computeFrame, 0);
-                //console.log(resp.text());
-                console.log(imageUrl);
+                //console.log(resp.blob)
+                console.log(data);
+                console.log(resp);
+                //console.log(resp.json());
+                //console.log(imageUrl);
             }
             catch(err)
             {
