@@ -62,10 +62,12 @@ class FaceRecognition(object):
             names (list) : updated list of names
         """
 
-        boxes = face_recognition.face_locations(self.image, model=self.model) #cnn
-        encodings = face_recognition.face_encodings(self.image, boxes)
         image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+        boxes = face_recognition.face_locations(image, model=self.model) #cnn
+        encodings = face_recognition.face_encodings(image, boxes)
 
+        if len(encodings) == 0:
+            raise Exception("Sorry, No face is detected")
         for encoding in encodings:
             # Attempt to match each face to the input image in our known face database
             matches = face_recognition.compare_faces(self.data['encodings'], encoding, self.tolerance)
@@ -95,4 +97,4 @@ class FaceRecognition(object):
 
             self.names.append(name.capitalize())
 
-        return (boxes, self.names, self.scores)
+        return (boxes, self.names, self.scores, encodings)
