@@ -29,24 +29,27 @@ while True:
         r = w / rgb.shape[1]
         
         fv = FaceRecognition(rgb, data=data)
-        boxes, names, accs = fv.faceAuth()
+        try:
+            boxes, names, accs, encodings = fv.faceAuth()
+            if len(encodings) != 0:
+                for ((top, right, bottom, left), name) in zip(boxes, names):
+                    top, right, bottom, left = (int(top*r)), (int(right*r)), (int(bottom*r)), (int(left*r))
 
-        for ((top, right, bottom, left), name) in zip(boxes, names):
-            top, right, bottom, left = (int(top*r)), (int(right*r)), (int(bottom*r)), (int(left*r))
-
-            x = top - 15 if top - 15 > 15 else top + 15
-            if name=='Unknown':
-                cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-                cv2.rectangle(frame, (left, bottom + 25), (right, bottom), (0, 0, 255), cv2.FILLED)
-                cv2.putText(frame, name, (left+30, bottom+20), config.FONT, 0.5, 
-                (255, 255, 255), 2)
-            else:
-                cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-                for acc in accs:
-                    # Status box
-                    cv2.rectangle(frame, (left, bottom + 25), (right, bottom), (0, 255, 0), cv2.FILLED)
-                    cv2.putText(frame, f"{name} {acc*100:.2f}%", (left+30, bottom+20), config.FONT, 0.5, 
-                    (255, 255, 255), 2)
+                    x = top - 15 if top - 15 > 15 else top + 15
+                    if name=='Unknown':
+                        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+                        cv2.rectangle(frame, (left, bottom + 25), (right, bottom), (0, 0, 255), cv2.FILLED)
+                        cv2.putText(frame, name, (left+30, bottom+20), config.FONT, 0.5, 
+                        (255, 255, 255), 2)
+                    else:
+                        cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+                        for acc in accs:
+                            # Status box
+                            cv2.rectangle(frame, (left, bottom + 25), (right, bottom), (0, 255, 0), cv2.FILLED)
+                            cv2.putText(frame, f"{name} {acc*100:.2f}%", (left+30, bottom+20), config.FONT, 0.5, 
+                            (255, 255, 255), 2)
+        except:
+            print("No face detected")
 
         cv2.imshow('Live', frame)
 
