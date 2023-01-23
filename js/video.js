@@ -21,7 +21,7 @@ async function accessCamera(){
         videoElem.srcObject = stream;
         videoElem.autoplay = true;
         captureFrame = stream;
-        init();
+        await init();
     }
     catch(err)
     {
@@ -61,12 +61,12 @@ async function closeCamera(){
     }
 }
 
-function init(){
-    videoElem = document.getElementById("video");
-    tmpCanvas = document.createElement('canvas');
+async function init(){
+    videoElem = await document.getElementById("video");
+    tmpCanvas = await document.createElement('canvas');
     tmpCanvas.setAttribute("width",videoElem.width);
     tmpCanvas.setAttribute("height",videoElem.height);
-    tmpContext = tmpCanvas.getContext("2d");
+    tmpContext = await tmpCanvas.getContext("2d");
     videoElem.addEventListener("play", computeFrame);
 }
 
