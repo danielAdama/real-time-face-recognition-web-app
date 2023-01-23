@@ -1,96 +1,43 @@
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
+from quart import Quart, request, jsonify
+from quart_cors import cors
 import numpy as np
 import pickle
+from Utilities import process
 from face_verification.face_verify import FaceRecognition
 import cv2
-import os
-from PIL import Image
 import imutils
-import io
+import logging
 import time
-import base64
+import argparse
 from config import config
-import json
 
-app = Flask(__name__)
-CORS(app)
+app = Quart(__name__)
+app.config['Flask_DEBUG'] = "development"
+handle = "my-api"
+cors(app)
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.NOTSET, datefmt='%d-%b-%y %H:%M:%S')
+_logger = logging.getLogger(handle)
+
 with open('encodings', 'rb') as f:
     data = pickle.load(f)
 
-def video_stream():
-    webcam = cv2.VideoCapture(0)
-    time.sleep(2.0)
-    if (webcam.isOpened() == False):
-        print('\nUnable to read camera feed')
-
-    while True:
-        success, frame = webcam.read()
-        if success == True:
-            # convert the input frame from BGR to RGB then resize it to have
-            # a width of 500px (to speedup processing) 
-            # rgb = cv2.cvtColor(frame, config.COLOR)
-            # rgb = imutils.resize(frame, 500)
-            # (h, w) = frame.shape[:2]
-            # r = w / rgb.shape[1]
-            rgb = cv2.cvtColor(frame, config.COLOR)
-            rgb = imutils.resize(frame, 500)
-            (h, w) = frame.shape[:2]
-            r = w / rgb.shape[1]
-            
-            fv = FaceRecognition(rgb, data=data)
-            boxes, names, accs = fv.faceAuth()
-
-            for ((top, right, bottom, left), name) in zip(boxes, names):
-                top, right, bottom, left = (int(top*r)), (int(right*r)), (int(bottom*r)), (int(left*r))
-
-                x = top - 15 if top - 15 > 15 else top + 15
-                if name=='Unknown':
-                    cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-                    cv2.rectangle(frame, (left, bottom + 25), (right, bottom), (0, 0, 255), cv2.FILLED)
-                    cv2.putText(frame, name, (left+30, bottom+20), config.FONT, 0.5, 
-                    (255, 255, 255), 2)
-                else:
-                    cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-                    for acc in accs:
-                        # Status box
-                        cv2.rectangle(frame, (left, bottom + 25), (right, bottom), (0, 255, 0), cv2.FILLED)
-                        cv2.putText(frame, f"{name} {acc*100:.2f}%", (left+30, bottom+20), config.FONT, 0.5, 
-                        (255, 255, 255), 2)
-            ret, buffer = cv2.imencode(".jpg", frame)
-            yield(
-                b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n'+ buffer.tobytes() +
-                b'\r\n\r\n'
-                )
-
-            key = cv2.waitKey(1)
-            if key == 27:
-                break
-        else:
-            break
-    webcam.release()
-    cv2.destroyAllWindows()
-
-def readb64(data):
-    img_arr = np.frombuffer(base64.b64decode(data), np.uint8)
-    img = cv2.imdecode(img_arr, cv2.IMREAD_COLOR)
-    return img
-
 @app.route('/api/v1/verify', methods = ["POST"])
-def verify():
+async def verify():
     try:
-        json_data = request.get_json()
+        json_data = await request.get_json()
         try:
             if not json_data:
+                _logger.warning("API VERIFY > please connect your camera")
                 return {
-                    "message": "Please make sure your camera is ON",
-                    "data": None,
-                    "error": "Bad request"
+                    "BaseResponse":{
+                            "Status":False,
+                            "Message": "Please make sure your camera is ON",
+                            "Data": None,
+                        },
+                    "Error": "Bad request"
                 }, config.HTTP_400_BAD_REQUEST
             
-            time.sleep(0.02)
-            frame = readb64(json_data)
+            frame = process.readb64(json_data)
             rgb = cv2.cvtColor(frame, config.COLOR)
             rgb = imutils.resize(frame, 648)
             (h, w) = frame.shape[:2]
@@ -104,29 +51,56 @@ def verify():
                         top, right, bottom, left = (int(top*r)), (int(right*r)), (int(bottom*r)), (int(left*r))
                         if name !='Unknown':
                             for acc in accs:
-                                print(name, acc)
-                        print(name)
+                                _logger.debug(f"API VERIFY > name: {name}, accuracy: {acc}")
+                        else:
+                            accs = 0
+                            _logger.debug(f"API VERIFY > name: {name}, accuracy: {accs}")
                     return {
-                        ##"detections":json.loads(name),
-                        "messsage":"Successfully processed image"
+                        "BaseResponse":{
+                            "Status":True,
+                            "Messsage":"Operation successfully"
+                        },
+                        "Detections": {
+                            "Label":name,
+                            "Confidence":acc,
+                            "Top":top,
+                            "Right":right,
+                            "Left":left,
+                            "Bottom":bottom
+                        },
                     }, config.HTTP_200_OK
-            except:
+            except Exception as ex:
+                _logger.warning(f"API VERIFY > No face found")
                 return {
-                    "error":"Error processing frame! No face found",
-                    "message":"No face Detected"
+                    "BaseResponse":{
+                            "Status":False,
+                            "Message":str(ex)
+                        },
+                    "Error":"Error processing frame! No face found"
                 }, config.HTTP_404_NOT_FOUND
 
         except Exception as ex:
+            _logger.warning(f"API VERIFY > APPLICATION ERROR while recognizing face")
             return {
-                "error":"Something went wrong",
-                "message":str(ex)
+                "BaseResponse":{
+                            "Status":False,
+                            "Message":str(ex)
+                        },
+                "Error":"Something went wrong",
             }, config.HTTP_500_INTERNAL_SERVER_ERROR
 
     except Exception as ex:
+            _logger.warning(f"API VERIFY > The data is not in json format")
             return {
-                "error":"The data is not in json format",
-                "message":str(ex)
+                "BaseResponse":{
+                            "Status":False,
+                            "Message":str(ex)
+                        },
+                "Error":"The data is not in json format",
             }, config.HTTP_404_NOT_FOUND
 
 if __name__ == '__main__':
-    app.run()
+    parser = argparse.ArgumentParser(description="Face Recognizer Api exposing hog model")
+    parser.add_argument("-p", "--port", default=8080, type=int, help="port number")
+    args = parser.parse_args()
+    app.run(host='0.0.0.0', debug=False, port=args.port)
