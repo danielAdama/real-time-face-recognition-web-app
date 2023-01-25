@@ -1,8 +1,10 @@
 import os
 import cv2
 
+CONNECTIONSTRING = "mongodb://localhost:27017"
+DATABASE = "faceEncodingdb"
 MODEL = 'hog'
-DATAPATH = r'C:\\Users\\DELL\\Desktop\\programming\\computerVision\\face_recognition\\'
+DATAPATH = r'C:\\Users\\DELL\\Desktop\\programming\\computerVision\\real-time-face-recognition-web-app\\'
 KNOWN_PATH = os.path.join(DATAPATH,'known_face')
 INPUT_PATH = os.path.join(DATAPATH, 'input_face')
 ##VIDEO_PATH = r'/home/daniel/Desktop/programming/pythondatascience/datascience/computerVision/video_for_vision_experiment'
