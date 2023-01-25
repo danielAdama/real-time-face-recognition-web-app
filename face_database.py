@@ -1,18 +1,13 @@
-import numpy as np
-import pickle
+from Utilities.db import Database
 import face_recognition
 import cv2
 import os
-import time
 import datetime
 from config import config
-import pymongo
 import json
 
-client = pymongo.MongoClient(config.CONNECTIONSTRING)
-db = client[config.DATABASE]
-tbl = db["UserEncoding"]
 
+db = Database(config.CONNECTIONSTRING, config.DATABASE, "UserEncoding")
 output = {}
 counter = 0
 
@@ -40,10 +35,10 @@ try:
                         "TimeCreated":datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                         "Encoding": json.dumps(encodings[i].tolist())
                     }
-                    db.UserEncoding.insert_one(
+                    output['Name'] = name
+                    db.connected().UserEncoding.insert_one(
                         data
                     )
-                    output['Name'] = name
     print('\nSuccessfully Serialized Face(s) into the Database'+"..."*3)
 except:
     pass
