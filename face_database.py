@@ -31,9 +31,9 @@ try:
                 for i in range(len(encodings)):
                     data = {
                         "Name":name,
-                        "FaceId": counter,
+                        #"FaceId": counter,
                         "TimeCreated":datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "Encoding": json.dumps(encodings[i])
+                        "Encoding": json.dumps(encodings[i].tolist())
                     }
                     output['Name'] = name
                     db.connected().UserEncoding.insert_one(
