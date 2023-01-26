@@ -4,15 +4,16 @@ from face_verification.face_verify import FaceRecognition
 import cv2
 import os
 import imutils
+from Utilities.db import Database
 import time
 from config import config
 
 
-# Load the Face Encodings
-with open('encodings', 'rb') as f:
-    data = pickle.load(f)
 
-webcam = cv2.VideoCapture(config.VIDEO)
+db = Database(config.CONNECTIONSTRING, config.DATABASE, "UserEncoding")
+data = db.processed_data()
+
+webcam = cv2.VideoCapture(0)
 time.sleep(2.0)
 if (webcam.isOpened() == False):
     print('\nUnable to read camera feed')
@@ -28,9 +29,9 @@ while True:
         (h, w) = frame.shape[:2]
         r = w / rgb.shape[1]
         
-        fv = FaceRecognition(rgb, data=data)
+        fv = FaceRecognition(data=data)
         try:
-            boxes, names, accs, encodings = fv.faceAuth()
+            boxes, names, accs, encodings = fv.faceAuth(rgb)
             if len(encodings) != 0:
                 for ((top, right, bottom, left), name) in zip(boxes, names):
                     top, right, bottom, left = (int(top*r)), (int(right*r)), (int(bottom*r)), (int(left*r))

@@ -33,7 +33,7 @@ try:
                         "Name":name,
                         "FaceId": counter,
                         "TimeCreated":datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "Encoding": json.dumps(encodings[i].tolist())
+                        "Encoding": json.dumps(encodings[i])
                     }
                     output['Name'] = name
                     db.connected().UserEncoding.insert_one(
