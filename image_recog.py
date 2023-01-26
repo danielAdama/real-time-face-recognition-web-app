@@ -1,15 +1,14 @@
 import numpy as np
 import pickle
 import imutils
+from Utilities.db import Database
 from config import config
 from face_verification.face_verify import FaceRecognition
 import cv2
 import os
 
-
-
-with open('encodings', 'rb') as f:
-    data = pickle.load(f)
+db = Database(config.CONNECTIONSTRING, config.DATABASE, "UserEncoding")
+data = db.processed_data()
 
 for filename in os.listdir(config.INPUT_PATH):
     print(f"Processing Input Face: {filename})")
@@ -18,8 +17,8 @@ for filename in os.listdir(config.INPUT_PATH):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     # After processing convert the Image back to BGR
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    fv = FaceRecognition(image=image, data=data)
-    boxes, names, _ = fv.faceAuth()
+    fv = FaceRecognition(data=data)
+    boxes, names, _, _ = fv.faceAuth(image)
 
     for ((top, right, bottom, left), name) in zip(boxes, names):
         x = top - 15 if top - 15 > 15 else top + 15
