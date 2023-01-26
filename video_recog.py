@@ -12,6 +12,7 @@ from config import config
 
 db = Database(config.CONNECTIONSTRING, config.DATABASE, "UserEncoding")
 data = db.processed_data()
+faceRecog = FaceRecognition(data=data)
 
 webcam = cv2.VideoCapture(0)
 time.sleep(2.0)
@@ -29,9 +30,8 @@ while True:
         (h, w) = frame.shape[:2]
         r = w / rgb.shape[1]
         
-        fv = FaceRecognition(data=data)
         try:
-            boxes, names, accs, encodings = fv.faceAuth(rgb)
+            boxes, names, accs, encodings = faceRecog.faceAuth(rgb)
             if len(encodings) != 0:
                 for ((top, right, bottom, left), name) in zip(boxes, names):
                     top, right, bottom, left = (int(top*r)), (int(right*r)), (int(bottom*r)), (int(left*r))
