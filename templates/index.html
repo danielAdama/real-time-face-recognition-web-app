@@ -10,9 +10,15 @@
     <video id = "video" width="648" height="485" autoplay playsinline>
         Sorry, video element not supported in your browser
     </video>
-    <div id="error"></div>
-    <button id="open-btn">Open Camera</button>
-    <button id="close-btn">Close Camera</button>
+    <div>
+      <div id="error"></div>
+      <p>To train an image first click 'Open Camera' and then click 'Train Face'</p>
+      <button id="open-btn">Open Camera</button>
+      <button id="close-btn">Close Camera</button>
+      <button id="train-btn">Train Face</button>
+      <!-- <div id="name-div" style="display:none;"></div> -->
+      <input id="name-var" type='text' placeholder='Enter your Name'>
+    </div>
   </body>
   <script type="text/javascript" src="/js/video.js"></script>
 </html>
