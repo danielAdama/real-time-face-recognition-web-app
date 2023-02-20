@@ -1,14 +1,80 @@
+
 // Means open the user's webcam without permission and ignore the
 // audio
 const mediaStreamConstraints = {
     audio: false,
     video: true
 }
+
 let captureFrame = null;
 let controller, videoElem, tmpCanvas, tmpContext;
 
-document.getElementById("open-btn").addEventListener("click", accessCamera);
-document.getElementById("close-btn").addEventListener("click", closeCamera);
+tmpCanvas = document.createElement('canvas');
+document.getElementById("open-btn").addEventListener("click", (e) => {
+    e.preventDefault();
+    accessCamera();
+});
+document.getElementById("close-btn").addEventListener("click", (e) => {
+    e.preventDefault();
+    closeCamera();
+});
+
+const name_var = document.getElementById("name-var");
+document.getElementById("train-btn").addEventListener("click", async function(){
+    videoElem = document.getElementById("video");
+    checkName = name_var.value.toLowerCase().replace(" ", "_");
+    const errorElem = document.getElementById('error');
+    try
+    {
+        const name = checkName.toLowerCase().replace(" ", "_");
+        await screenshot(name);
+        
+    }
+    catch(err)
+    {
+        errorElem.innerHTML = err;
+        errorElem.style.display = "block";
+        console.log(err);
+    }
+});
+
+async function screenshot(name){
+    try
+    {
+        let imgCanvas = document.createElement('canvas');
+        let computedStyle = window.getComputedStyle(videoElem);
+        let bgr = computedStyle.getPropertyValue('background-color');
+        imgCanvas.setAttribute("width",parseInt(video.offsetWidth));
+        imgCanvas.setAttribute("height",parseInt(video.offsetHeight));
+        let imgContext = imgCanvas.getContext("2d");
+        imgContext.drawImage(videoElem, 0, 0, imgCanvas.width, imgCanvas.height);
+        const imageUrl = await imgCanvas.toDataURL("image/jpeg");
+        /* Convert the imageUrl from base64 to bolb and then json for faster processing */
+        const data = imageUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+        const resp = await fetch(
+            "http://127.0.0.1:8080/api/v1/train",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    'name':name,
+                    'image':data
+                })
+            }
+        );
+        const jsn = await resp.json();
+        console.log(jsn);
+    }
+    catch(err)
+    {
+        errorElem.innerHTML = err;
+        errorElem.style.display = "block";
+        console.log(err);
+    }
+}
+
 async function accessCamera(){
     videoElem = document.getElementById("video");
     const errorElem = document.getElementById('error');
@@ -63,9 +129,8 @@ async function closeCamera(){
 
 async function init(){
     videoElem = await document.getElementById("video");
-    tmpCanvas = await document.createElement('canvas');
-    tmpCanvas.setAttribute("width",videoElem.width);
-    tmpCanvas.setAttribute("height",videoElem.height);
+    tmpCanvas.setAttribute("width",parseInt(videoElem.offsetWidth));
+    tmpCanvas.setAttribute("height",parseInt(videoElem.offsetHeight));
     tmpContext = await tmpCanvas.getContext("2d");
     videoElem.addEventListener("play", computeFrame);
 }
@@ -76,8 +141,8 @@ async function computeFrame(){
     /* Get current video frame as image */
     try
     {
-        tmpContext.drawImage(videoElem, 0, 0, videoElem.videoWidth, videoElem.videoHeight);
-        const imageUrl = tmpCanvas.toDataURL("image/jpeg");
+        tmpContext.drawImage(videoElem, 0, 0, videoElem.width, videoElem.height);
+        const imageUrl = await tmpCanvas.toDataURL("image/jpeg");
         /* Convert the imageUrl from base64 to bolb and then json for faster processing */
         const data = imageUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
         //const bolb = new Blob([imageUrl], {type:"image/jpeg"});
