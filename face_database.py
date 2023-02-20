@@ -15,7 +15,7 @@ try:
     for name in os.listdir(config.KNOWN_PATH):
         for filename in os.listdir(os.path.join(config.KNOWN_PATH,name)):
             counter += 1
-            #print(f"Processing {name}'s face!")
+            print(f"Processing {name}'s face!")
             image = cv2.imread(os.path.join(config.KNOWN_PATH,name,filename))
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             boxes = face_recognition.face_locations(image, model=config.MODEL) #cnn
@@ -31,7 +31,6 @@ try:
                 for i in range(len(encodings)):
                     data = {
                         "Name":name,
-                        #"FaceId": counter,
                         "TimeCreated":datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                         "Encoding": json.dumps(encodings[i].tolist())
                     }
